@@ -48,7 +48,7 @@ async function searchR34() {
   document.getElementById("results").innerHTML = "";
 
   try {
-    const proxy = "https://corsproxy.io/?";
+    const proxy = "https://api.allorigins.win/raw?url=";
     const url = `https://rule34.xxx/index.php?page=post&s=list&tags=${encodeURIComponent(query)}`;
 
     const res = await fetch(proxy + url);
