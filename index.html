@@ -1,111 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>R34 Search – Find It</title>
+<title>Brock's Goon RP Panel 😈</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-  body { margin:0; font-family:Arial; background:#000; color:#ff69b4; min-height:100vh; padding:20px; box-sizing:border-box; }
-  .container { max-width:1200px; margin:0 auto; text-align:center; }
-  h1 { font-size:48px; margin:20px 0; color:#ff69b4; text-shadow:0 0 15px #ff1493; }
-  .search-box { display:flex; max-width:600px; margin:0 auto 30px; }
-  input { flex:1; padding:16px; font-size:18px; border:1px solid #ff1493; border-radius:8px 0 0 8px; background:#111; color:#fff; }
-  button { padding:16px 30px; background:#ff1493; color:#fff; border:none; border-radius:0 8px 8px 0; cursor:pointer; font-weight:bold; }
-  button:hover { background:#c71585; }
-  #results { display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:15px; }
-  .thumb { border:2px solid #222; border-radius:8px; overflow:hidden; background:#111; cursor:pointer; }
-  .thumb img { width:100%; height:auto; display:block; }
-  .thumb:hover { border-color:#ff69b4; box-shadow:0 0 15px #ff1493; }
-  #status { text-align:center; color:#ffcc00; margin:30px 0; font-size:20px; }
-  .footer { text-align:center; color:#555; margin-top:50px; font-size:12px; }
+  body { margin:0; font-family:Arial; background:#000; color:#ff69b4; min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(#000, #111); }
+  .container { background:rgba(20,20,20,0.9); padding:50px; border-radius:20px; width:500px; text-align:center; box-shadow:0 0 40px #ff1493; }
+  h1 { font-size:40px; margin-bottom:20px; color:#ff69b4; text-shadow:0 0 15px #ff1493; }
+  textarea { width:100%; padding:16px; font-size:18px; border:1px solid #ff1493; border-radius:8px; background:#222; color:#fff; min-height:120px; resize:vertical; box-sizing:border-box; margin-bottom:20px; }
+  button { padding:18px 60px; background:#ff1493; color:#fff; border:none; border-radius:50px; font-size:22px; font-weight:bold; cursor:pointer; box-shadow:0 0 25px #ff69b4; }
+  button:hover { background:#c71585; transform:scale(1.05); }
+  #status { color:#ffcc00; margin-top:25px; font-size:18px; display:none; }
+  .hint { font-size:14px; color:#888; margin-top:40px; }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>R34 Search</h1>
-  <p>Type character + kink (e.g. "Gwen Stacy tentacles")</p>
+  <h1>Brock's Goon RP Panel 🔥🍆</h1>
+  <p>Type your command or RP input – it goes straight to Discord</p>
 
-  <div class="search-box">
-    <input id="query" placeholder="Search Rule 34..." autocomplete="off" />
-    <button onclick="searchR34()">Search 😈</button>
-  </div>
+  <textarea id="input" placeholder="Examples:\n!rpstart Mercy gets dominated by tentacles\n!rp She begs for more\n!rpstop"></textarea>
 
-  <div id="status">Ready...</div>
-  <div id="results"></div>
+  <button onclick="sendToDiscord()">Send to Discord 😈</button>
 
-  <div class="footer">Rule 34 says: if it exists, there's porn of it</div>
+  <div id="status"></div>
+
+  <div class="hint">Pro tip: Use !rpstart, !rp, !rpstop – bot will reply in the channel</div>
 </div>
 
 <script>
-const WEBHOOK = "https://discord.com/api/webhooks/1481310564985606365/sUOYR_NTG2hAL6U0Tl4CfdWKzuvtKCJ-B5CmA6kbkVOBWhyIHISE5VNwpVfjvkq-D6Hb"; // optional log
+const WEBHOOK = "https://discord.com/api/webhooks/1481310564985606365/sUOYR_NTG2hAL6U0Tl4CfdWKzuvtKCJ-B5CmA6kbkVOBWhyIHISE5VNwpVfjvkq-D6Hb"; // the webhook that posts to your RP channel
 
-async function searchR34() {
-  const query = document.getElementById("query").value.trim();
-  if (!query) return alert("Type something");
+async function sendToDiscord() {
+  const text = document.getElementById("input").value.trim();
+  if (!text) return alert("Type something nasty nigga");
 
-  document.getElementById("status").textContent = "Scraping Rule 34... 🍑";
-  document.getElementById("results").innerHTML = "";
+  document.getElementById("status").style.display = "block";
+  document.getElementById("status").textContent = "Sending to Discord... 🔥";
 
   try {
-    // Gelbooru is way friendlier than rule34.xxx right now
-    const proxy = "https://corsproxy.io/?";
-    const url = `https://gelbooru.com/index.php?page=post&s=list&tags=${encodeURIComponent(query)}`;
+    const msg = {
+      content: text,
+      username: "Hen-Tayo", // optional: makes it look like the panel is talking
+      avatar_url: "https://i.imgur.com/YourCoolAvatar.png" // optional: add a horny avatar URL
+    };
 
-    const res = await fetch(proxy + url);
-    const text = await res.text();
-
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(text, "text/html");
-
-    // Gelbooru uses .thumb-preview for thumbs
-    const thumbs = doc.querySelectorAll(".thumb-preview");
-
-    if (thumbs.length === 0) {
-      document.getElementById("status").textContent = "No results... try dirtier tags or different spelling 😏";
-      return;
-    }
-
-    thumbs.forEach(thumb => {
-      const img = thumb.querySelector("img");
-      const a = thumb.querySelector("a");
-
-      if (img && a) {
-        const src = img.src;
-        const href = "https://gelbooru.com" + a.getAttribute("href");
-
-        const div = document.createElement("div");
-        div.className = "thumb";
-        div.innerHTML = `
-          <a href="${href}" target="_blank">
-            <img src="${src}" alt="Rule 34 result" loading="lazy">
-            <span>View full</span>
-          </a>
-        `;
-        document.getElementById("results").appendChild(div);
-      }
+    await fetch(WEBHOOK, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(msg)
     });
 
-    document.getElementById("status").textContent = `Found ${thumbs.length} results 🔥`;
+    document.getElementById("status").textContent = "Sent! Check Discord 😏";
+    document.getElementById("input").value = ""; // clear input
 
-    // Log the search term
-    if (WEBHOOK) {
-      const msg = `**R34 SEARCH** 🔥🍆\nQuery: ${query}\nResults: ${thumbs.length}\nTime: ${new Date().toISOString()}`;
-      fetch(WEBHOOK, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({content: msg})
-      }).catch(()=>{});
-    }
+    // Optional: auto-clear status after 3 sec
+    setTimeout(() => {
+      document.getElementById("status").style.display = "none";
+    }, 3000);
 
   } catch (e) {
-    document.getElementById("status").textContent = "Error scraping... site blocked or proxy died 😤 Try again.";
+    document.getElementById("status").textContent = "Failed... webhook issue 😤";
   }
 }
 
-// Enter key
-document.getElementById("query").addEventListener("keypress", e => {
-  if (e.key === "Enter") searchR34();
+// Enter key support (Shift+Enter for new line, Enter alone to send)
+document.getElementById("input").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendToDiscord();
+  }
 });
 </script>
 </body>
