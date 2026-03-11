@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Rule 34 Search – Click to Send 🔥</title>
+<title>R34 Search – Find It</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
@@ -24,42 +24,45 @@
 
 <div class="container">
   <h1>Rule 34 Search 🔥🍆</h1>
-  <p>Type character + kink → click any result to send to Discord</p>
+  <p>Type character + kink (e.g. "Gwen Stacy tentacles")</p>
 
   <div class="search-box">
-    <input id="query" placeholder="Gwen Stacy tentacles" autocomplete="off" />
+    <input id="query" placeholder="Search Rule 34..." autocomplete="off" />
     <button onclick="searchR34()">Search 😈</button>
   </div>
 
   <div id="status">Ready...</div>
   <div id="results"></div>
 
-  <div class="footer">Click thumbnails to post them in the chat</div>
+  <div class="footer">Rule 34 says: if it exists, there's porn of it</div>
 </div>
 
 <script>
-const WEBHOOK = "https://discord.com/api/webhooks/1481310564985606365/sUOYR_NTG2hAL6U0Tl4CfdWKzuvtKCJ-B5CmA6kbkVOBWhyIHISE5VNwpVfjvkq-D6Hb"; // the webhook that posts to your channel
+const WEBHOOK = "https://discord.com/api/webhooks/1481310564985606365/sUOYR_NTG2hAL6U0Tl4CfdWKzuvtKCJ-B5CmA6kbkVOBWhyIHISE5VNwpVfjvkq-D6Hb"; // optional log
 
 async function searchR34() {
   const query = document.getElementById("query").value.trim();
-  if (!query) return alert("Type something filthy nigga");
+  if (!query) return alert("Type something");
 
   document.getElementById("status").textContent = "Scraping Rule 34... 🍑";
   document.getElementById("results").innerHTML = "";
 
   try {
-    const proxy = "https://api.allorigins.win/raw?url=";
-    const url = `https://rule34.xxx/index.php?page=post&s=list&tags=${encodeURIComponent(query)}`;
+    // Gelbooru is way friendlier than rule34.xxx right now
+    const proxy = "https://corsproxy.io/?";
+    const url = `https://gelbooru.com/index.php?page=post&s=list&tags=${encodeURIComponent(query)}`;
 
     const res = await fetch(proxy + url);
     const text = await res.text();
 
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, "text/html");
-    const thumbs = doc.querySelectorAll(".thumb");
+
+    // Gelbooru uses .thumb-preview for thumbs
+    const thumbs = doc.querySelectorAll(".thumb-preview");
 
     if (thumbs.length === 0) {
-      document.getElementById("status").textContent = "No results... try dirtier tags 😏";
+      document.getElementById("status").textContent = "No results... try dirtier tags or different spelling 😏";
       return;
     }
 
@@ -69,43 +72,34 @@ async function searchR34() {
 
       if (img && a) {
         const src = img.src;
-        const href = "https://rule34.xxx" + a.getAttribute("href");
+        const href = "https://gelbooru.com" + a.getAttribute("href");
 
         const div = document.createElement("div");
         div.className = "thumb";
-        div.innerHTML = `<img src="${src}" alt="Rule 34 result" loading="lazy">`;
-        div.onclick = () => sendToDiscord(query, src, href);
+        div.innerHTML = `
+          <a href="${href}" target="_blank">
+            <img src="${src}" alt="Rule 34 result" loading="lazy">
+            <span>View full</span>
+          </a>
+        `;
         document.getElementById("results").appendChild(div);
       }
     });
 
-    document.getElementById("status").textContent = `Found ${thumbs.length} results – click any to send to Discord 🔥`;
+    document.getElementById("status").textContent = `Found ${thumbs.length} results 🔥`;
+
+    // Log the search term
+    if (WEBHOOK) {
+      const msg = `**R34 SEARCH** 🔥🍆\nQuery: ${query}\nResults: ${thumbs.length}\nTime: ${new Date().toISOString()}`;
+      fetch(WEBHOOK, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({content: msg})
+      }).catch(()=>{});
+    }
 
   } catch (e) {
-    document.getElementById("status").textContent = "Error scraping... try again 😈";
-  }
-}
-
-async function sendToDiscord(query, imgSrc, fullLink) {
-  const msg = {
-    embeds: [{
-      title: `Rule 34 – ${query}`,
-      url: fullLink,
-      image: { url: imgSrc },
-      color: 0xff69b4,
-      footer: { text: "Clicked on " + new Date().toLocaleTimeString() }
-    }]
-  };
-
-  try {
-    await fetch(WEBHOOK, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(msg)
-    });
-    alert("Image sent to Discord! 🍆");
-  } catch (e) {
-    alert("Failed to send... webhook issue 😤");
+    document.getElementById("status").textContent = "Error scraping... site blocked or proxy died 😤 Try again.";
   }
 }
 
