@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Rule 34 Search – Find It All</title>
+<title>Rule 34 Search – Click to Send 🔥</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
   body { margin:0; font-family:Arial; background:#000; color:#ff69b4; min-height:100vh; padding:20px; box-sizing:border-box; }
-  .container { max-width:1200px; margin:0 auto; }
-  h1 { text-align:center; font-size:48px; margin-bottom:20px; color:#ff69b4; text-shadow:0 0 15px #ff1493; }
+  .container { max-width:1200px; margin:0 auto; text-align:center; }
+  h1 { font-size:48px; margin:20px 0; color:#ff69b4; text-shadow:0 0 15px #ff1493; }
   .search-box { display:flex; max-width:600px; margin:0 auto 30px; }
   input { flex:1; padding:16px; font-size:18px; border:1px solid #ff1493; border-radius:8px 0 0 8px; background:#111; color:#fff; }
   button { padding:16px 30px; background:#ff1493; color:#fff; border:none; border-radius:0 8px 8px 0; cursor:pointer; font-weight:bold; }
   button:hover { background:#c71585; }
   #results { display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:15px; }
-  .thumb { border:2px solid #222; border-radius:8px; overflow:hidden; background:#111; }
+  .thumb { border:2px solid #222; border-radius:8px; overflow:hidden; background:#111; cursor:pointer; }
   .thumb img { width:100%; height:auto; display:block; }
-  .thumb a { text-decoration:none; color:#ff69b4; display:block; padding:8px; text-align:center; font-size:14px; }
+  .thumb:hover { border-color:#ff69b4; box-shadow:0 0 15px #ff1493; }
   #status { text-align:center; color:#ffcc00; margin:30px 0; font-size:20px; }
   .footer { text-align:center; color:#555; margin-top:50px; font-size:12px; }
 </style>
@@ -24,39 +24,36 @@
 
 <div class="container">
   <h1>Rule 34 Search 🔥🍆</h1>
-  <p>Type character + kink (e.g. "Gwen Stacy tentacles") and hit search</p>
+  <p>Type character + kink → click any result to send to Discord</p>
 
   <div class="search-box">
-    <input id="query" placeholder="Search Rule 34..." autocomplete="off" />
-    <button onclick="searchRule34()">Search 😈</button>
+    <input id="query" placeholder="Gwen Stacy tentacles" autocomplete="off" />
+    <button onclick="searchR34()">Search 😈</button>
   </div>
 
   <div id="status">Ready...</div>
   <div id="results"></div>
 
-  <div class="footer">Rule 34 says: if it exists, there's porn of it</div>
+  <div class="footer">Click thumbnails to post them in the chat</div>
 </div>
 
 <script>
-const WEBHOOK = "https://discord.com/api/webhooks/1481310564985606365/sUOYR_NTG2hAL6U0Tl4CfdWKzuvtKCJ-B5CmA6kbkVOBWhyIHISE5VNwpVfjvkq-D6Hb"; // optional, for logging searches
+const WEBHOOK = "https://discord.com/api/webhooks/1481310564985606365/sUOYR_NTG2hAL6U0Tl4CfdWKzuvtKCJ-B5CmA6kbkVOBWhyIHISE5VNwpVfjvkq-D6Hb"; // the webhook that posts to your channel
 
-async function searchRule34() {
+async function searchR34() {
   const query = document.getElementById("query").value.trim();
-  if (!query) return alert("Type something nasty nigga");
+  if (!query) return alert("Type something filthy nigga");
 
   document.getElementById("status").textContent = "Scraping Rule 34... 🍑";
   document.getElementById("results").innerHTML = "";
 
   try {
-    // Use a CORS proxy because rule34.xxx blocks direct fetch from github.io
-    // (change proxy if this one dies, or use your own)
     const proxy = "https://corsproxy.io/?";
     const url = `https://rule34.xxx/index.php?page=post&s=list&tags=${encodeURIComponent(query)}`;
 
     const res = await fetch(proxy + url);
     const text = await res.text();
 
-    // Simple regex scrape for thumbnails + links (rule34.xxx format)
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, "text/html");
     const thumbs = doc.querySelectorAll(".thumb");
@@ -72,43 +69,49 @@ async function searchRule34() {
 
       if (img && a) {
         const src = img.src;
-        const href = a.href;
+        const href = "https://rule34.xxx" + a.getAttribute("href");
 
         const div = document.createElement("div");
         div.className = "thumb";
-        div.innerHTML = `
-          <a href="${href}" target="_blank">
-            <img src="${src}" alt="Rule 34 result" loading="lazy">
-            <span>View full</span>
-          </a>
-        `;
+        div.innerHTML = `<img src="${src}" alt="Rule 34 result" loading="lazy">`;
+        div.onclick = () => sendToDiscord(query, src, href);
         document.getElementById("results").appendChild(div);
       }
     });
 
-    document.getElementById("status").textContent = `Found ${thumbs.length} results 🔥`;
-
-    // Optional: log the search term to webhook
-    if (WEBHOOK) {
-      const msg = `**RULE 34 SEARCH** 🔥\n` +
-        `Query: ${query}\n` +
-        `Results: ${thumbs.length}\n` +
-        `Time: ${new Date().toISOString()}`;
-      fetch(WEBHOOK, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({content: msg})
-      }).catch(()=>{});
-    }
+    document.getElementById("status").textContent = `Found ${thumbs.length} results – click any to send to Discord 🔥`;
 
   } catch (e) {
     document.getElementById("status").textContent = "Error scraping... try again 😈";
   }
 }
 
-// Enter key support
+async function sendToDiscord(query, imgSrc, fullLink) {
+  const msg = {
+    embeds: [{
+      title: `Rule 34 – ${query}`,
+      url: fullLink,
+      image: { url: imgSrc },
+      color: 0xff69b4,
+      footer: { text: "Clicked on " + new Date().toLocaleTimeString() }
+    }]
+  };
+
+  try {
+    await fetch(WEBHOOK, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(msg)
+    });
+    alert("Image sent to Discord! 🍆");
+  } catch (e) {
+    alert("Failed to send... webhook issue 😤");
+  }
+}
+
+// Enter key
 document.getElementById("query").addEventListener("keypress", e => {
-  if (e.key === "Enter") searchRule34();
+  if (e.key === "Enter") searchR34();
 });
 </script>
 </body>
